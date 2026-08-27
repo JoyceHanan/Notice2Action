@@ -1,15 +1,15 @@
 import { Navigate, Route, Routes } from "react-router";
 import { useAuth } from "./context/AuthContext";
 
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import UploadNotice from "./pages/UploadNotice";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import UploadNotice from "./components/UploadNotice";
 import NoticeDetails from "./pages/NoticeDetails";
 
 // Person 2 pages
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import Reminders from "./pages/Reminders";
+import Dashboard from "./components/Dashboard";
+import Profile from "./components/Profile";
+import Reminders from "./components/Reminders";
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
