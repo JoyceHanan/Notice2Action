@@ -1,34 +1,30 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { uploadNotice } from "../api/api";
 
 function UploadNotice() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const allowedTypes = [
-    "application/pdf",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "text/plain",
-  ];
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
 
-    setError("");
+    if (!file) return;
 
-    if (!file) {
-      return;
-    }
+    const allowedExtensions = ["pdf", "docx", "txt"];
+    const extension = file.name.split(".").pop().toLowerCase();
 
-    if (!allowedTypes.includes(file.type)) {
+    if (!allowedExtensions.includes(extension)) {
       setError("Please upload a PDF, DOCX, or TXT file.");
+      setSelectedFile(null);
       return;
     }
 
+    setError("");
     setSelectedFile(file);
   };
 
@@ -36,7 +32,7 @@ function UploadNotice() {
     e.preventDefault();
 
     if (!selectedFile) {
-      setError("Please select a notice file.");
+      setError("Please select a notice file first.");
       return;
     }
 
@@ -46,14 +42,13 @@ function UploadNotice() {
 
       const data = await uploadNotice(selectedFile);
 
-      // Adjust according to backend response
       const noticeId =
         data.notice?._id ||
         data.noticeId ||
         data._id;
 
       if (!noticeId) {
-        throw new Error("Notice ID was not returned by the server.");
+        throw new Error("Notice ID was not returned.");
       }
 
       navigate(`/notices/${noticeId}`);
@@ -69,51 +64,113 @@ function UploadNotice() {
   };
 
   return (
-    <div className="upload-page">
-      <div className="upload-container">
-        <h1>Upload Notice</h1>
+    <div className="min-h-screen bg-slate-50 px-4 py-10">
 
-        <p>
-          Upload your college or placement notice and let
-          Notice2Action convert it into an action plan.
-        </p>
+      <div className="mx-auto max-w-3xl">
 
-        {error && <p className="error-message">{error}</p>}
+        {/* Heading */}
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-bold text-slate-800">
+            Upload a Notice
+          </h1>
 
-        <form onSubmit={handleUpload}>
-          <input
-            type="file"
-            accept=".pdf,.docx,.txt"
-            onChange={handleFileChange}
-          />
+          <p className="mt-3 text-slate-500">
+            Upload your notice and let AI turn it into a personalized action plan.
+          </p>
+        </div>
 
-          {selectedFile && (
-            <div className="selected-file">
-              <p>
-                Selected: <strong>{selectedFile.name}</strong>
-              </p>
+        {/* Upload Card */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+
+          {error && (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-600">
+              {error}
             </div>
           )}
 
-          <button type="submit" disabled={loading}>
-            {loading
-              ? "Analyzing Notice..."
-              : "Upload & Analyze"}
-          </button>
-        </form>
+          <form onSubmit={handleUpload}>
 
-        {loading && (
-          <div className="analysis-loading">
-            <p>🤖 AI is analyzing your notice...</p>
+            <div
+              onClick={() => fileInputRef.current.click()}
+              className="cursor-pointer rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50 p-12 text-center transition hover:border-indigo-500 hover:bg-indigo-100"
+            >
+              <div className="text-5xl">📄</div>
 
-            <ul>
-              <li>Extracting important information</li>
-              <li>Finding deadlines</li>
-              <li>Checking eligibility requirements</li>
-              <li>Generating your action plan</li>
-            </ul>
-          </div>
-        )}
+              <h2 className="mt-4 text-lg font-semibold text-slate-700">
+                Click to upload your notice
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Supported formats: PDF, DOCX, TXT
+              </p>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+
+            {/* Selected File */}
+            {selectedFile && (
+              <div className="mt-6 flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4">
+
+                <div>
+                  <p className="font-medium text-green-700">
+                    ✓ File Selected
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-600">
+                    {selectedFile.name}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedFile(null)}
+                  className="text-sm font-medium text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-8 w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading
+                ? "AI is analyzing your notice..."
+                : "Upload & Analyze"}
+            </button>
+
+          </form>
+
+          {/* Loading Steps */}
+          {loading && (
+            <div className="mt-8 rounded-xl bg-slate-50 p-5">
+
+              <p className="font-semibold text-slate-700">
+                🤖 AI Analysis in Progress
+              </p>
+
+              <div className="mt-4 space-y-2 text-sm text-slate-600">
+                <p>✓ Reading notice content</p>
+                <p>✓ Extracting important information</p>
+                <p>✓ Detecting deadlines</p>
+                <p>✓ Checking eligibility</p>
+                <p>✓ Creating your action plan</p>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
       </div>
     </div>
   );

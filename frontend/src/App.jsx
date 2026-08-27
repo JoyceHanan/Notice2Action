@@ -10,7 +10,7 @@ import NoticeDetails from "./pages/NoticeDetails";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Reminders from "./pages/Reminders";
-import "./App.css";
+import "./index.css";
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 

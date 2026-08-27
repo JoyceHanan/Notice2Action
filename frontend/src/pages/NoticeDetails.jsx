@@ -28,7 +28,6 @@ function NoticeDetails() {
 
       const data = await getNoticeById(id);
 
-      // Adjust according to backend response
       setNotice(data.notice || data);
     } catch (err) {
       setError(
@@ -51,15 +50,15 @@ function NoticeDetails() {
         status: newStatus,
       });
 
-      setNotice((prevNotice) => ({
-        ...prevNotice,
-        actionItems: prevNotice.actionItems.map((item) =>
+      setNotice((prev) => ({
+        ...prev,
+        actionItems: prev.actionItems.map((item) =>
           item._id === task._id
             ? { ...item, status: newStatus }
             : item
         ),
       }));
-    } catch (err) {
+    } catch {
       alert("Failed to update task.");
     }
   };
@@ -67,27 +66,23 @@ function NoticeDetails() {
   const handleAskQuestion = async (e) => {
     e.preventDefault();
 
-    if (!question.trim()) {
-      return;
-    }
+    if (!question.trim()) return;
 
     try {
       setAsking(true);
 
-      const data = await askNoticeQuestion(
-        id,
-        question
-      );
+      const data = await askNoticeQuestion(id, question);
 
       setAnswer(
         data.answer ||
         data.response ||
         "No answer received."
       );
+
     } catch (err) {
       setAnswer(
         err.response?.data?.message ||
-          "Unable to answer the question."
+        "Unable to answer the question."
       );
     } finally {
       setAsking(false);
@@ -95,274 +90,403 @@ function NoticeDetails() {
   };
 
   if (loading) {
-    return <div>Loading notice...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-lg text-slate-600">
+          Loading notice analysis...
+        </p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="rounded-xl bg-red-50 p-6 text-red-600">
+          {error}
+        </div>
+      </div>
+    );
   }
 
-  if (!notice) {
-    return <div>Notice not found.</div>;
-  }
-
-  const eligibility = notice.eligibility;
+  if (!notice) return null;
 
   return (
-    <div className="notice-details-page">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
 
-      {/* HEADER */}
-      <section className="notice-header">
-        <h1>{notice.title || "Notice Details"}</h1>
+      <div className="mx-auto max-w-5xl space-y-6">
 
-        {notice.noticeType && (
-          <p>
-            Type: {notice.noticeType}
+        {/* HEADER */}
+        <div className="rounded-2xl bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium text-indigo-600">
+            NOTICE ANALYSIS
           </p>
-        )}
-      </section>
+
+          <h1 className="mt-2 text-3xl font-bold text-slate-800">
+            {notice.title || "Notice Details"}
+          </h1>
+
+          {notice.noticeType && (
+            <span className="mt-4 inline-block rounded-full bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-600">
+              {notice.noticeType}
+            </span>
+          )}
+        </div>
 
 
-      {/* SUMMARY */}
-      <section className="notice-section">
-        <h2>🤖 AI Summary</h2>
+        {/* AI SUMMARY */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-bold text-slate-800">
+            🤖 AI Summary
+          </h2>
 
-        <p>
-          {notice.summary ||
-            "Summary is not available."}
-        </p>
+          <p className="mt-4 leading-7 text-slate-600">
+            {notice.summary ||
+              "Summary is not available."}
+          </p>
 
-        {notice.importantPoints?.length > 0 && (
-          <>
-            <h3>Important Points</h3>
+          {notice.importantPoints?.length > 0 && (
+            <div className="mt-5">
 
-            <ul>
-              {notice.importantPoints.map(
-                (point, index) => (
-                  <li key={index}>{point}</li>
-                )
-              )}
-            </ul>
-          </>
-        )}
-      </section>
+              <h3 className="font-semibold text-slate-700">
+                Important Points
+              </h3>
 
-
-      {/* ELIGIBILITY */}
-      <section className="notice-section">
-        <h2>🎯 Your Eligibility</h2>
-
-        {eligibility ? (
-          <>
-            <h3>
-              {eligibility.status}
-            </h3>
-
-            {eligibility.reasons?.length > 0 && (
-              <ul>
-                {eligibility.reasons.map(
-                  (reason, index) => (
-                    <li key={index}>
-                      {reason}
-                    </li>
-                  )
-                )}
+              <ul className="mt-3 space-y-2">
+                {notice.importantPoints.map((point, index) => (
+                  <li
+                    key={index}
+                    className="rounded-lg bg-slate-50 p-3 text-slate-600"
+                  >
+                    • {point}
+                  </li>
+                ))}
               </ul>
-            )}
-          </>
-        ) : (
-          <p>
-            Eligibility information is not available.
-          </p>
-        )}
-      </section>
+
+            </div>
+          )}
+        </section>
 
 
-      {/* NEXT BEST ACTION */}
-      <section className="notice-section">
-        <h2>🧠 Next Best Action</h2>
+        {/* ELIGIBILITY */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
 
-        {notice.nextBestAction ? (
-          <>
-            <h3>
-              {notice.nextBestAction.action}
-            </h3>
+          <h2 className="text-xl font-bold text-slate-800">
+            🎯 Your Eligibility
+          </h2>
 
-            <p>
-              {notice.nextBestAction.reason}
+          {notice.eligibility ? (
+            <div className="mt-4">
+
+              <span className="inline-block rounded-full bg-green-100 px-4 py-2 font-semibold text-green-700">
+                {notice.eligibility.status}
+              </span>
+
+              {notice.eligibility.reasons?.length > 0 && (
+                <ul className="mt-4 space-y-2">
+
+                  {notice.eligibility.reasons.map(
+                    (reason, index) => (
+                      <li
+                        key={index}
+                        className="text-slate-600"
+                      >
+                        • {reason}
+                      </li>
+                    )
+                  )}
+
+                </ul>
+              )}
+
+            </div>
+          ) : (
+            <p className="mt-4 text-slate-500">
+              Eligibility information is not available.
             </p>
-          </>
-        ) : (
-          <p>
-            No pending action at the moment.
-          </p>
-        )}
-      </section>
+          )}
+
+        </section>
 
 
-      {/* DEADLINES */}
-      <section className="notice-section">
-        <h2>⏰ Important Deadlines</h2>
+        {/* NEXT BEST ACTION */}
+        <section className="rounded-2xl border border-indigo-100 bg-indigo-50 p-6">
 
-        {notice.deadlines?.length > 0 ? (
-          <div>
-            {notice.deadlines.map((deadline) => (
-              <div
-                className="deadline-item"
-                key={deadline._id}
-              >
-                <h3>{deadline.title}</h3>
+          <h2 className="text-xl font-bold text-indigo-800">
+            🧠 Next Best Action
+          </h2>
 
-                <p>
-                  {deadline.date
-                    ? new Date(
-                        deadline.date
-                      ).toLocaleString()
-                    : "Date not specified"}
-                </p>
+          {notice.nextBestAction ? (
+            <div className="mt-4">
 
-                <p>
-                  Priority:{" "}
-                  {deadline.urgency || "Normal"}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No deadlines found.</p>
-        )}
-      </section>
+              <h3 className="text-lg font-semibold text-slate-800">
+                {notice.nextBestAction.action}
+              </h3>
+
+              <p className="mt-2 text-slate-600">
+                {notice.nextBestAction.reason}
+              </p>
+
+            </div>
+          ) : (
+            <p className="mt-4 text-slate-600">
+              No pending action at the moment.
+            </p>
+          )}
+
+        </section>
 
 
-      {/* ACTION CHECKLIST */}
-      <section className="notice-section">
-        <h2>✅ Your Action Checklist</h2>
+        {/* DEADLINES */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
 
-        {notice.actionItems?.length > 0 ? (
-          <div>
-            {notice.actionItems.map((task) => (
-              <div
-                className="task-item"
-                key={task._id}
-              >
-                <input
-                  type="checkbox"
-                  checked={
-                    task.status === "completed"
-                  }
-                  onChange={() =>
-                    handleTaskToggle(task)
-                  }
-                />
+          <h2 className="text-xl font-bold text-slate-800">
+            ⏰ Important Deadlines
+          </h2>
 
-                <div>
-                  <h3>{task.title}</h3>
+          {notice.deadlines?.length > 0 ? (
 
-                  {task.description && (
-                    <p>
-                      {task.description}
-                    </p>
-                  )}
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
 
-                  {task.priority && (
-                    <span>
-                      Priority: {task.priority}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>
-            No action items generated.
-          </p>
-        )}
-      </section>
+              {notice.deadlines.map((deadline, index) => (
 
-
-      {/* ROADMAP */}
-      <section className="notice-section">
-        <h2>🔗 Action Roadmap</h2>
-
-        {notice.roadmap?.length > 0 ? (
-          <ol>
-            {notice.roadmap.map(
-              (step, index) => (
-                <li key={index}>
-                  {step.title || step}
-                </li>
-              )
-            )}
-          </ol>
-        ) : (
-          <p>
-            Complete the checklist in the recommended order.
-          </p>
-        )}
-      </section>
-
-
-      {/* WARNINGS */}
-      <section className="notice-section">
-        <h2>🚨 Warnings & Missing Information</h2>
-
-        {notice.warnings?.length > 0 ? (
-          <div>
-            {notice.warnings.map(
-              (warning, index) => (
                 <div
-                  className="warning-item"
-                  key={index}
+                  key={deadline._id || index}
+                  className="rounded-xl border border-slate-200 p-4"
                 >
-                  <strong>
-                    {warning.type}
-                  </strong>
 
-                  <p>
-                    {warning.message}
+                  <h3 className="font-semibold text-slate-800">
+                    {deadline.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm text-slate-600">
+                    {deadline.date
+                      ? new Date(deadline.date).toLocaleString()
+                      : "Date not specified"}
                   </p>
+
+                  <p className="mt-3 text-sm font-medium text-orange-600">
+                    {deadline.urgency || "Normal"}
+                  </p>
+
                 </div>
-              )
-            )}
-          </div>
-        ) : (
-          <p>
-            No contradictions or missing information detected.
+
+              ))}
+
+            </div>
+
+          ) : (
+
+            <p className="mt-4 text-slate-500">
+              No deadlines found.
+            </p>
+
+          )}
+
+        </section>
+
+
+        {/* ACTION CHECKLIST */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+
+          <h2 className="text-xl font-bold text-slate-800">
+            ✅ Action Checklist
+          </h2>
+
+          {notice.actionItems?.length > 0 ? (
+
+            <div className="mt-5 space-y-3">
+
+              {notice.actionItems.map((task, index) => (
+
+                <div
+                  key={task._id || index}
+                  className="flex items-start gap-4 rounded-xl border border-slate-200 p-4"
+                >
+
+                  <input
+                    type="checkbox"
+                    checked={task.status === "completed"}
+                    onChange={() => handleTaskToggle(task)}
+                    className="mt-1 h-5 w-5 accent-indigo-600"
+                  />
+
+                  <div>
+
+                    <h3
+                      className={`font-semibold ${
+                        task.status === "completed"
+                          ? "text-slate-400 line-through"
+                          : "text-slate-800"
+                      }`}
+                    >
+                      {task.title}
+                    </h3>
+
+                    {task.description && (
+                      <p className="mt-1 text-sm text-slate-500">
+                        {task.description}
+                      </p>
+                    )}
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          ) : (
+
+            <p className="mt-4 text-slate-500">
+              No action items generated.
+            </p>
+
+          )}
+
+        </section>
+
+
+        {/* ROADMAP */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+
+          <h2 className="text-xl font-bold text-slate-800">
+            🔗 Action Roadmap
+          </h2>
+
+          {notice.roadmap?.length > 0 ? (
+
+            <ol className="mt-5 space-y-3">
+
+              {notice.roadmap.map((step, index) => (
+
+                <li
+                  key={index}
+                  className="flex gap-4"
+                >
+
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-semibold text-white">
+                    {index + 1}
+                  </span>
+
+                  <div className="pt-1 text-slate-700">
+                    {step.title || step}
+                  </div>
+
+                </li>
+
+              ))}
+
+            </ol>
+
+          ) : (
+
+            <p className="mt-4 text-slate-500">
+              Roadmap information is not available.
+            </p>
+
+          )}
+
+        </section>
+
+
+        {/* WARNINGS */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+
+          <h2 className="text-xl font-bold text-slate-800">
+            🚨 Warnings & Missing Information
+          </h2>
+
+          {notice.warnings?.length > 0 ? (
+
+            <div className="mt-5 space-y-3">
+
+              {notice.warnings.map((warning, index) => (
+
+                <div
+                  key={index}
+                  className="rounded-xl border border-yellow-200 bg-yellow-50 p-4"
+                >
+
+                  <p className="font-semibold text-yellow-800">
+                    {warning.type || "Warning"}
+                  </p>
+
+                  <p className="mt-1 text-sm text-yellow-700">
+                    {warning.message || warning}
+                  </p>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          ) : (
+
+            <p className="mt-4 text-slate-500">
+              No contradictions or missing information detected.
+            </p>
+
+          )}
+
+        </section>
+
+
+        {/* ASK THE NOTICE */}
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+
+          <h2 className="text-xl font-bold text-slate-800">
+            💬 Ask the Notice
+          </h2>
+
+          <p className="mt-2 text-sm text-slate-500">
+            Ask any question related to this notice.
           </p>
-        )}
-      </section>
 
-
-      {/* ASK THE NOTICE */}
-      <section className="notice-section">
-        <h2>💬 Ask the Notice</h2>
-
-        <form onSubmit={handleAskQuestion}>
-          <input
-            type="text"
-            value={question}
-            onChange={(e) =>
-              setQuestion(e.target.value)
-            }
-            placeholder="Ask something about this notice..."
-          />
-
-          <button
-            type="submit"
-            disabled={asking}
+          <form
+            onSubmit={handleAskQuestion}
+            className="mt-5 flex flex-col gap-3 sm:flex-row"
           >
-            {asking ? "Thinking..." : "Ask"}
-          </button>
-        </form>
 
-        {answer && (
-          <div className="ai-answer">
-            <h3>Answer</h3>
-            <p>{answer}</p>
-          </div>
-        )}
-      </section>
+            <input
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Example: What documents do I need?"
+              className="flex-1 rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+
+            <button
+              type="submit"
+              disabled={asking}
+              className="rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+            >
+              {asking ? "Thinking..." : "Ask"}
+            </button>
+
+          </form>
+
+          {answer && (
+
+            <div className="mt-6 rounded-xl bg-indigo-50 p-5">
+
+              <p className="font-semibold text-indigo-800">
+                AI Answer
+              </p>
+
+              <p className="mt-2 leading-7 text-slate-700">
+                {answer}
+              </p>
+
+            </div>
+
+          )}
+
+        </section>
+
+      </div>
 
     </div>
   );
