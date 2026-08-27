@@ -11,6 +11,7 @@ const Roadmap =
   require("../models/Roadmap");
 const StudentProfile =
   require("../models/StudentProfile");
+const Reminder = require("../models/Reminder");
 
 const parsePDF =
   require("../services/document/pdfParser");
@@ -94,87 +95,51 @@ const createAnalysisRecords = async ({
     notice: notice._id
   });
 
-  const deadlines =
-    await Deadline.insertMany(
-      (analysis.deadlines || []).map(
-        (deadline) => ({
-          user: userId,
-          notice: notice._id,
-          title:
-            deadline.title ||
-            "Deadline",
-          type:
-            deadline.type ||
-            "other",
-          date:
-            deadline.date
-              ? new Date(deadline.date)
-              : undefined,
-          priority:
-            deadline.priority ||
-            "medium",
-          sourceText:
-            deadline.sourceText || ""
+  await Reminder.deleteMany({
+    user: userId,
+    notice: notice._id
+  });
+
+  const deadlinePayloads = (analysis.deadlines || []).map((deadline) => ({
+    user: userId,
+    notice: notice._id,
+    title: deadline.title || "Deadline",
+    type: deadline.type || "other",
+    date: deadline.date && !isNaN(Date.parse(deadline.date)) ? new Date(deadline.date) : undefined,
+    priority: deadline.priority || "medium",
+    sourceText: deadline.sourceText || ""
+  }));
+
+  const deadlines = deadlinePayloads.length ? await Deadline.insertMany(deadlinePayloads) : [];
+
+  const taskData = (analysis.tasks || []).map((task, index) => ({
+    user: userId,
+    notice: notice._id,
+    title: task.title || `Task ${index + 1}`,
+    description: task.description || "",
+    priority: task.priority || "medium",
+    status: "pending",
+    order: index,
+    dependsOn: [],
+    deadline: undefined
+  }));
+
+  const tasks = taskData.length ? await Task.insertMany(taskData) : [];
+
+  for (let index = 0; index < tasks.length; index++) {
+    const aiTask = analysis.tasks[index];
+    if (Array.isArray(aiTask?.dependsOn)) {
+      const dependencies = aiTask.dependsOn
+        .map((dependencyIndex) => {
+          if (typeof dependencyIndex === "number") {
+            const dependency = tasks[dependencyIndex];
+            return dependency ? dependency._id : null;
+          }
+          return null;
         })
-      )
-    );
+        .filter(Boolean);
 
-  const taskData =
-    (analysis.tasks || []).map(
-      (task, index) => ({
-        user: userId,
-        notice: notice._id,
-        title:
-          task.title ||
-          `Task ${index + 1}`,
-        description:
-          task.description || "",
-        priority:
-          task.priority ||
-          "medium",
-        status: "pending",
-        order: index,
-        dependsOn: [],
-        deadline: undefined
-      })
-    );
-
-  const tasks =
-    taskData.length
-      ? await Task.insertMany(
-          taskData
-        )
-      : [];
-
-  // Convert AI task indexes into MongoDB task dependencies.
-  for (
-    let index = 0;
-    index < tasks.length;
-    index++
-  ) {
-    const aiTask =
-      analysis.tasks[index];
-
-    if (
-      Array.isArray(
-        aiTask?.dependsOn
-      )
-    ) {
-      const dependencies =
-        aiTask.dependsOn
-          .map((dependencyIndex) => {
-            const dependency =
-              tasks[dependencyIndex];
-
-            return dependency
-              ? dependency._id
-              : null;
-          })
-          .filter(Boolean);
-
-      tasks[index].dependsOn =
-        dependencies;
-
+      tasks[index].dependsOn = dependencies;
       await tasks[index].save();
     }
   }
@@ -186,6 +151,21 @@ const createAnalysisRecords = async ({
       steps:
         analysis.roadmap || []
     });
+
+  if (deadlines.length > 0) {
+    const reminderPayloads = deadlines.map((dl) => ({
+      user: userId,
+      notice: notice._id,
+      deadline: dl._id,
+      title: dl.title,
+      message: dl.sourceText || `Upcoming deadline: ${dl.title}`,
+      reminderTime: dl.date || new Date(Date.now() + 24 * 60 * 60 * 1000),
+      type: "deadline",
+      channel: "in_app",
+      status: "pending"
+    }));
+    await Reminder.insertMany(reminderPayloads);
+  }
 
   return {
     deadlines,

@@ -1,28 +1,35 @@
 import { Navigate, Route, Routes } from "react-router";
 import { useAuth } from "./context/AuthContext";
 
+import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import UploadNotice from "./pages/UploadNotice";
 import NoticeDetails from "./pages/NoticeDetails";
-
-// Person 2 pages
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Reminders from "./pages/Reminders";
 import "./index.css";
+
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+          <p className="mt-4 text-sm font-semibold text-slate-600">Loading Notice2Action...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <Layout>{children}</Layout>;
 };
 
 function App() {

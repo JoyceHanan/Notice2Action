@@ -4,6 +4,7 @@ node_modules/
 # Environment variables - NEVER commit this
 .env
 .env.*
+*.env
 !.env.example
 
 # Logs
@@ -18,6 +19,12 @@ Thumbs.db
 # Uploads (local files)
 uploads/*
 !uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Build & Dist
+dist/
+build/
 
 # Test scripts
 test-ai.js

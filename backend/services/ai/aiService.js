@@ -36,52 +36,153 @@ const extractJSON = (content) => {
   }
 };
 
+const safeParseJSON = (input) => {
+  if (typeof input === "string") {
+    try {
+      return JSON.parse(input);
+    } catch (e) {
+      return null;
+    }
+  }
+  return input;
+};
+
 const validateAnalysis = (data) => {
   if (!data || typeof data !== "object") {
-    throw new Error("Invalid AI analysis");
+    throw new Error("Invalid AI analysis object");
   }
 
   data.title =
-    typeof data.title === "string"
-      ? data.title
-      : "Untitled Notice";
+    typeof data.title === "string" ? data.title : "Untitled Notice";
 
   data.summary =
-    typeof data.summary === "string"
-      ? data.summary
-      : "";
+    typeof data.summary === "string" ? data.summary : "";
 
-  data.importantPoints =
-    Array.isArray(data.importantPoints)
-      ? data.importantPoints
-      : [];
+  // 1. Important Points
+  if (typeof data.importantPoints === "string") {
+    data.importantPoints = safeParseJSON(data.importantPoints) || [data.importantPoints];
+  }
+  data.importantPoints = Array.isArray(data.importantPoints)
+    ? data.importantPoints.map((p) => (typeof p === "string" ? p : JSON.stringify(p)))
+    : [];
 
-  data.deadlines =
-    Array.isArray(data.deadlines)
-      ? data.deadlines
-      : [];
+  // 2. Deadlines
+  if (typeof data.deadlines === "string") {
+    data.deadlines = safeParseJSON(data.deadlines) || [];
+  }
+  if (!Array.isArray(data.deadlines)) data.deadlines = [];
+  data.deadlines = data.deadlines
+    .map((d) => {
+      if (typeof d === "string") d = safeParseJSON(d) || { title: d };
+      if (!d || typeof d !== "object") return null;
+      return {
+        title: d.title || d.name || "Deadline",
+        type: d.type || "other",
+        date: d.date && !isNaN(Date.parse(d.date)) ? new Date(d.date) : undefined,
+        priority: d.priority || "medium",
+        sourceText: d.sourceText || ""
+      };
+    })
+    .filter(Boolean);
 
-  data.tasks =
-    Array.isArray(data.tasks)
-      ? data.tasks
-      : [];
+  // Deduplicate deadlines by title
+  const seenDeadlines = new Set();
+  data.deadlines = data.deadlines
+    .filter((d) => {
+      const key = (d.title || "").toLowerCase().trim();
+      if (!key || seenDeadlines.has(key)) return false;
+      seenDeadlines.add(key);
+      return true;
+    })
+    .slice(0, 5);
 
-  data.roadmap =
-    Array.isArray(data.roadmap)
-      ? data.roadmap
-      : [];
+  // 3. Tasks
+  if (typeof data.tasks === "string") {
+    data.tasks = safeParseJSON(data.tasks) || [];
+  }
+  if (!Array.isArray(data.tasks)) data.tasks = [];
+  data.tasks = data.tasks
+    .map((t, idx) => {
+      if (typeof t === "string") t = safeParseJSON(t) || { title: t };
+      if (!t || typeof t !== "object") return null;
 
-  data.warnings =
-    Array.isArray(data.warnings)
-      ? data.warnings
-      : [];
+      let dependsOn = [];
+      if (Array.isArray(t.dependsOn)) {
+        dependsOn = t.dependsOn
+          .map((dep) => {
+            if (typeof dep === "number") return dep;
+            if (typeof dep === "string" && !isNaN(Number(dep))) return Number(dep);
+            return null;
+          })
+          .filter((x) => x !== null);
+      }
 
-  data.missingInformation =
-    Array.isArray(data.missingInformation)
-      ? data.missingInformation
-      : [];
+      return {
+        title: t.title || `Task ${idx + 1}`,
+        description: t.description || "",
+        priority: t.priority || "medium",
+        status: t.status || "pending",
+        dependsOn
+      };
+    })
+    .filter(Boolean);
 
-  if (!data.eligibility) {
+  // Deduplicate tasks by title
+  const seenTasks = new Set();
+  data.tasks = data.tasks
+    .filter((t) => {
+      const key = (t.title || "").toLowerCase().trim();
+      if (!key || seenTasks.has(key)) return false;
+      seenTasks.add(key);
+      return true;
+    })
+    .slice(0, 5);
+
+  // 4. Roadmap
+  if (typeof data.roadmap === "string") {
+    data.roadmap = safeParseJSON(data.roadmap) || [];
+  }
+  if (!Array.isArray(data.roadmap)) data.roadmap = [];
+  data.roadmap = data.roadmap
+    .map((r, idx) => {
+      if (typeof r === "string") r = { title: r, step: idx + 1 };
+      if (!r || typeof r !== "object") return null;
+      return {
+        step: r.step || idx + 1,
+        title: r.title || `Step ${idx + 1}`,
+        description: r.description || ""
+      };
+    })
+    .filter(Boolean);
+
+  // 5. Warnings
+  if (typeof data.warnings === "string") {
+    data.warnings = safeParseJSON(data.warnings) || [];
+  }
+  if (!Array.isArray(data.warnings)) data.warnings = [];
+  data.warnings = data.warnings
+    .map((w) => {
+      if (typeof w === "string") w = safeParseJSON(w) || { message: w };
+      if (!w || typeof w !== "object") return null;
+      return {
+        type: w.type || w.category || "warning",
+        message: w.message || w.text || JSON.stringify(w),
+        sourceText: w.sourceText || ""
+      };
+    })
+    .filter(Boolean);
+
+  // 6. Missing Information
+  if (typeof data.missingInformation === "string") {
+    data.missingInformation = safeParseJSON(data.missingInformation) || [data.missingInformation];
+  }
+  if (!Array.isArray(data.missingInformation)) data.missingInformation = [];
+
+  // 7. Eligibility
+  if (typeof data.eligibility === "string") {
+    data.eligibility = safeParseJSON(data.eligibility) || { status: "unknown" };
+  }
+  if (!data.eligibility || typeof data.eligibility !== "object") {
     data.eligibility = {
       status: "unknown",
       reasons: [],
@@ -89,18 +190,11 @@ const validateAnalysis = (data) => {
     };
   }
 
-  if (
-    ![
-      "eligible",
-      "partially_eligible",
-      "not_eligible",
-      "unknown"
-    ].includes(data.eligibility.status)
-  ) {
-    data.eligibility.status = "unknown";
+  // 8. Next Best Action
+  if (typeof data.nextBestAction === "string") {
+    data.nextBestAction = safeParseJSON(data.nextBestAction) || { title: data.nextBestAction };
   }
-
-  if (!data.nextBestAction) {
+  if (!data.nextBestAction || typeof data.nextBestAction !== "object") {
     data.nextBestAction = {
       title: "",
       reason: "",
@@ -115,7 +209,6 @@ const validateAnalysis = (data) => {
 const callLyzrApi = async (message, sessionId = null) => {
   const apiKey = process.env.AI_API_KEY;
   let baseUrl = process.env.AI_BASE_URL || "https://agent-prod.studio.lyzr.ai/v3/inference/chat/";
-  // Ensure trailing slash
   if (!baseUrl.endsWith("/")) baseUrl += "/";
   const agentId = process.env.LYZR_AGENT_ID;
 
@@ -123,7 +216,7 @@ const callLyzrApi = async (message, sessionId = null) => {
     throw new Error("AI_API_KEY is not configured");
   }
   if (!agentId) {
-    throw new Error("LYZR_AGENT_ID is not configured in .env. You must add it for Lyzr to work.");
+    throw new Error("LYZR_AGENT_ID is not configured in .env.");
   }
 
   const payload = {
@@ -168,8 +261,7 @@ const analyzeNotice = async ({
     CGPA: studentProfile?.CGPA ?? null,
     backlogs: studentProfile?.backlogs ?? null,
     skills: studentProfile?.skills || [],
-    graduationYear:
-      studentProfile?.graduationYear || null
+    graduationYear: studentProfile?.graduationYear || null
   };
 
   const userPrompt = `
@@ -209,7 +301,7 @@ const askNotice = async ({
   let conversationHistory = "";
   if (history && history.length > 0) {
     conversationHistory = "\nCONVERSATION HISTORY:\n";
-    history.slice(-10).forEach(msg => {
+    history.slice(-10).forEach((msg) => {
       conversationHistory += `${msg.role.toUpperCase()}: ${msg.content}\n`;
     });
   }

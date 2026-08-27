@@ -271,13 +271,7 @@ const login = async (req, res, next) => {
 
 const getProfile = async (req, res, next) => {
   try {
-    /*
-    |--------------------------------------------------------------------------
-    | req.user.id comes from authMiddleware
-    |--------------------------------------------------------------------------
-    */
-
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id || req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -286,22 +280,17 @@ const getProfile = async (req, res, next) => {
       });
     }
 
+    const sanitized = sanitizeUser(user);
+
     return res.status(200).json({
       success: true,
-      user: sanitizeUser(user),
+      user: sanitized,
+      data: sanitized,
     });
   } catch (error) {
     next(error);
   }
 };
-
-/*
-|--------------------------------------------------------------------------
-| UPDATE PROFILE
-|--------------------------------------------------------------------------
-| PUT /api/auth/profile
-|--------------------------------------------------------------------------
-*/
 
 const updateProfile = async (req, res, next) => {
   try {
@@ -316,7 +305,7 @@ const updateProfile = async (req, res, next) => {
       skills,
     } = req.body;
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id || req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -325,14 +314,8 @@ const updateProfile = async (req, res, next) => {
       });
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Update only supplied fields
-    |--------------------------------------------------------------------------
-    */
-
     if (name !== undefined) {
-      user.name = name.trim();
+      user.name = String(name).trim();
     }
 
     if (phone !== undefined) {
@@ -353,56 +336,37 @@ const updateProfile = async (req, res, next) => {
 
     if (cgpa !== undefined && cgpa !== "") {
       const parsedCgpa = Number(cgpa);
-
-      if (Number.isNaN(parsedCgpa)) {
-        return res.status(400).json({
-          success: false,
-          message: "CGPA must be a valid number.",
-        });
+      if (!Number.isNaN(parsedCgpa)) {
+        user.cgpa = parsedCgpa;
       }
-
-      user.cgpa = parsedCgpa;
     }
 
     if (backlogs !== undefined && backlogs !== "") {
       const parsedBacklogs = Number(backlogs);
-
-      if (
-        Number.isNaN(parsedBacklogs) ||
-        parsedBacklogs < 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Backlogs must be a valid non-negative number.",
-        });
+      if (!Number.isNaN(parsedBacklogs) && parsedBacklogs >= 0) {
+        user.backlogs = parsedBacklogs;
       }
-
-      user.backlogs = parsedBacklogs;
     }
 
     if (skills !== undefined) {
-      if (!Array.isArray(skills)) {
-        return res.status(400).json({
-          success: false,
-          message: "Skills must be an array.",
-        });
+      let skillsArray = [];
+      if (Array.isArray(skills)) {
+        skillsArray = skills;
+      } else if (typeof skills === "string") {
+        skillsArray = skills.split(",").map((s) => s.trim()).filter(Boolean);
       }
-
-      user.skills = skills;
+      user.skills = skillsArray;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Save
-    |--------------------------------------------------------------------------
-    */
-
     await user.save();
+
+    const sanitized = sanitizeUser(user);
 
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully.",
-      user: sanitizeUser(user),
+      user: sanitized,
+      data: sanitized,
     });
   } catch (error) {
     next(error);

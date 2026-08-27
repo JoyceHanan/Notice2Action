@@ -162,6 +162,11 @@ app.use(
 );
 
 app.use(
+  "/api/tasks",
+  checklistRoutes
+);
+
+app.use(
   "/api/roadmap",
   roadmapRoutes
 );

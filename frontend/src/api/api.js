@@ -47,6 +47,15 @@ export const uploadNotice = async (file) => {
   return response.data;
 };
 
+// Paste notice text directly (converts to a text file payload for compatibility)
+export const pasteNotice = async (text, title = "Pasted Notice") => {
+  const blob = new Blob([text], { type: "text/plain" });
+  const file = new File([blob], `${title.replace(/[^a-z0-9]/gi, "_").toLowerCase() || "notice"}.txt`, {
+    type: "text/plain",
+  });
+  return await uploadNotice(file);
+};
+
 // Get all notices
 export const getNotices = async () => {
   const response = await API.get("/notices");

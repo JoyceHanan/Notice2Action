@@ -12,7 +12,7 @@ const getReminders = async (
   next
 ) => {
   try {
-    const reminders =
+    const rawReminders =
       await Reminder.find({
         user: req.user._id
       })
@@ -31,6 +31,14 @@ const getReminders = async (
         .sort({
           reminderTime: 1
         });
+
+    const seenTitles = new Set();
+    const reminders = rawReminders.filter((r) => {
+      const key = (r.title || "").toLowerCase().trim();
+      if (!key || seenTitles.has(key)) return false;
+      seenTitles.add(key);
+      return true;
+    });
 
     return successResponse(
       res,

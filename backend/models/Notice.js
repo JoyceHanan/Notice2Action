@@ -39,89 +39,40 @@ const noticeSchema = new mongoose.Schema(
     ],
 
     eligibility: {
-      status: {
-        type: String,
-        enum: [
-          "eligible",
-          "partially_eligible",
-          "not_eligible",
-          "unknown"
-        ],
-        default: "unknown"
-      },
-
-      reasons: [
-        {
-          type: String
-        }
-      ],
-
-      requirements: {
-        branches: [String],
-        minimumCGPA: Number,
-        maximumBacklogs: Number,
-        requiredSkills: [String],
-        year: mongoose.Schema.Types.Mixed,
-        degree: String
+      type: mongoose.Schema.Types.Mixed,
+      default: {
+        status: "unknown",
+        reasons: [],
+        requirements: {}
       }
     },
 
     deadlines: [
       {
-        title: String,
-        type: String,
-        date: Date,
-        priority: {
-          type: String,
-          enum: ["low", "medium", "high", "urgent"],
-          default: "medium"
-        },
-        sourceText: String
+        type: mongoose.Schema.Types.Mixed
       }
     ],
 
     tasks: [
       {
-        title: String,
-        description: String,
-        priority: {
-          type: String,
-          enum: ["low", "medium", "high", "urgent"],
-          default: "medium"
-        },
-        status: {
-          type: String,
-          enum: ["pending", "in_progress", "completed"],
-          default: "pending"
-        },
-        dependsOn: [
-          {
-            type: Number
-          }
-        ]
+        type: mongoose.Schema.Types.Mixed
       }
     ],
 
     roadmap: [
       {
-        step: Number,
-        title: String,
-        description: String,
-        dependsOn: [Number]
+        type: mongoose.Schema.Types.Mixed
       }
     ],
 
     nextBestAction: {
-      title: String,
-      reason: String,
-      priority: String
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
     },
 
     warnings: [
       {
-        type: String,
-        message: String,
-        sourceText: String
+        type: mongoose.Schema.Types.Mixed
       }
     ],
 
@@ -133,8 +84,7 @@ const noticeSchema = new mongoose.Schema(
 
     confidence: {
       type: Number,
-      min: 0,
-      max: 1
+      default: 0.9
     },
 
     analysisStatus: {
