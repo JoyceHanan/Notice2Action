@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import NoticeCard from "../components/NoticeCard";
 import DeadlineCard from "../components/Deadlinecard";
 import TaskItem from "../components/TaskItem";
@@ -30,27 +31,27 @@ const Dashboard = () => {
 
   useEffect(() => {
     /*
-      Person 1 will connect this to:
+      TEMPORARY DATA
 
-      GET /api/dashboard
+      Person 1 will replace this with:
 
-      through api.js.
+      const response = await api.get("/dashboard");
 
-      For now, we use sample data.
+      once api.js is connected to the backend.
     */
 
     const sampleData = {
       user: {
-        name: "Student",
+        name: "Alex",
       },
 
       notices: [
         {
-          _id: "1",
+          _id: "notice-1",
           title: "Campus Placement Drive",
           noticeType: "Placement",
           summary:
-            "Campus placement opportunity for eligible final-year students.",
+            "Campus placement opportunity for eligible final-year students. Students must register before the deadline and upload the required documents.",
           urgency: "urgent",
           progress: 60,
           deadlines: [
@@ -60,37 +61,81 @@ const Dashboard = () => {
             },
           ],
         },
+
+        {
+          _id: "notice-2",
+          title: "Hackathon Registration",
+          noticeType: "Event",
+          summary:
+            "Students can register for the upcoming inter-college hackathon.",
+          urgency: "medium",
+          progress: 30,
+          deadlines: [
+            {
+              title: "Registration Deadline",
+              date: "2026-09-05",
+            },
+          ],
+        },
       ],
 
       deadlines: [
         {
-          _id: "1",
+          _id: "deadline-1",
           title: "Placement Registration",
           date: "2026-08-30",
+        },
+
+        {
+          _id: "deadline-2",
+          title: "Upload Marksheet",
+          date: "2026-08-31",
+        },
+
+        {
+          _id: "deadline-3",
+          title: "Hackathon Registration",
+          date: "2026-09-05",
         },
       ],
 
       tasks: [
         {
-          _id: "1",
+          _id: "task-1",
           title: "Update Resume",
-          description: "Prepare your latest resume.",
+          description:
+            "Prepare your latest resume.",
           status: "completed",
           priority: "high",
         },
+
         {
-          _id: "2",
+          _id: "task-2",
           title: "Upload Marksheet",
-          description: "Upload your latest marksheet.",
+          description:
+            "Upload your latest marksheet.",
           status: "pending",
           priority: "high",
+          deadline: "2026-08-31",
         },
+
         {
-          _id: "3",
+          _id: "task-3",
           title: "Submit Application",
-          description: "Complete the placement application.",
+          description:
+            "Complete the placement application.",
           status: "pending",
           priority: "urgent",
+          deadline: "2026-08-30",
+        },
+
+        {
+          _id: "task-4",
+          title: "Verify Contact Details",
+          description:
+            "Make sure your phone number and email are correct.",
+          status: "pending",
+          priority: "medium",
         },
       ],
 
@@ -104,21 +149,21 @@ const Dashboard = () => {
       nextBestAction: {
         title: "Upload your marksheet",
         reason:
-          "Your placement registration deadline is approaching.",
+          "Your placement registration deadline is approaching and this task is required before submission.",
       },
     };
 
     setTimeout(() => {
       setDashboard(sampleData);
       setLoading(false);
-    }, 500);
+    }, 700);
   }, []);
 
   const handleTaskToggle = (taskId) => {
-    setDashboard((prev) => ({
-      ...prev,
+    setDashboard((previous) => ({
+      ...previous,
 
-      tasks: prev.tasks.map((task) =>
+      tasks: previous.tasks.map((task) =>
         task._id === taskId
           ? {
               ...task,
@@ -133,158 +178,246 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return <Loading message="Loading your dashboard..." />;
+    return (
+      <Loading message="Preparing your action plan..." />
+    );
   }
 
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-header">
-        <div>
-          <h1>
-            Welcome back, {dashboard.user.name} 👋
-          </h1>
+    <main className="min-h-screen bg-slate-50 px-4 py-8 md:ml-60 md:px-8 lg:px-10">
 
-          <p>
-            Here is what you need to take action on today.
-          </p>
-        </div>
+      {/* Header */}
+      <div className="mb-8">
+        <p className="mb-2 text-sm font-semibold text-indigo-600">
+          YOUR ACTION CENTER
+        </p>
+
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+          Welcome back, {dashboard.user.name} 👋
+        </h1>
+
+        <p className="mt-2 text-sm text-slate-500 sm:text-base">
+          Here is what you need to take action on today.
+        </p>
       </div>
 
-      {/* Statistics */}
+      {/* Stats */}
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <span className="stat-icon">📄</span>
-          <div>
-            <h3>{dashboard.stats.totalNotices}</h3>
-            <p>Total Notices</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-500">
+              Total Notices
+            </span>
+
+            <span className="text-xl">📄</span>
           </div>
+
+          <p className="text-3xl font-bold text-slate-900">
+            {dashboard.stats.totalNotices}
+          </p>
+
+          <p className="mt-1 text-xs text-slate-400">
+            Stored in your account
+          </p>
         </div>
 
-        <div className="stat-card">
-          <span className="stat-icon">⏳</span>
-          <div>
-            <h3>{dashboard.stats.pendingTasks}</h3>
-            <p>Pending Tasks</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-500">
+              Pending Tasks
+            </span>
+
+            <span className="text-xl">⏳</span>
           </div>
+
+          <p className="text-3xl font-bold text-slate-900">
+            {dashboard.stats.pendingTasks}
+          </p>
+
+          <p className="mt-1 text-xs text-orange-500">
+            Need your attention
+          </p>
         </div>
 
-        <div className="stat-card">
-          <span className="stat-icon">✅</span>
-          <div>
-            <h3>{dashboard.stats.completedTasks}</h3>
-            <p>Completed Tasks</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-500">
+              Completed
+            </span>
+
+            <span className="text-xl">✅</span>
           </div>
+
+          <p className="text-3xl font-bold text-slate-900">
+            {dashboard.stats.completedTasks}
+          </p>
+
+          <p className="mt-1 text-xs text-emerald-600">
+            Tasks completed
+          </p>
         </div>
 
-        <div className="stat-card">
-          <span className="stat-icon">📈</span>
-          <div>
-            <h3>{dashboard.stats.progress}%</h3>
-            <p>Overall Progress</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-500">
+              Overall Progress
+            </span>
+
+            <span className="text-xl">📈</span>
+          </div>
+
+          <p className="text-3xl font-bold text-slate-900">
+            {dashboard.stats.progress}%
+          </p>
+
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-indigo-600"
+              style={{
+                width: `${dashboard.stats.progress}%`,
+              }}
+            />
           </div>
         </div>
       </div>
 
       {/* Next Best Action */}
-
       {dashboard.nextBestAction && (
-        <section className="next-action-section">
-          <div className="next-action-card">
-            <div className="next-action-icon">🧠</div>
+        <section className="mb-8">
+          <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5 sm:p-6">
 
-            <div className="next-action-content">
-              <span className="section-label">
-                NEXT BEST ACTION
-              </span>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
 
-              <h2>
-                {dashboard.nextBestAction.title}
-              </h2>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-2xl shadow-sm">
+                🧠
+              </div>
 
-              <p>
-                {dashboard.nextBestAction.reason}
-              </p>
+              <div className="flex-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+                  Next Best Action
+                </p>
+
+                <h2 className="mt-1 text-lg font-bold text-slate-900 sm:text-xl">
+                  {dashboard.nextBestAction.title}
+                </h2>
+
+                <p className="mt-1 text-sm leading-5 text-slate-600">
+                  {dashboard.nextBestAction.reason}
+                </p>
+              </div>
+
+              <button className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                Take Action →
+              </button>
+
             </div>
-
-            <button className="action-button">
-              Take Action →
-            </button>
           </div>
         </section>
       )}
 
-      {/* Main content */}
-
-      <div className="dashboard-grid">
+      {/* Two column section */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
 
         {/* Notices */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-3">
 
-        <section className="dashboard-section">
-          <div className="section-header">
+          <div className="mb-5 flex items-center justify-between">
             <div>
-              <h2>Your Notices</h2>
-              <p>Notices that require your attention.</p>
+              <h2 className="text-lg font-bold text-slate-900">
+                Your Notices
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Notices requiring your attention.
+              </p>
             </div>
+
+            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+              {dashboard.notices.length}
+            </span>
           </div>
 
-          {dashboard.notices.length === 0 ? (
-            <div className="empty-state">
-              <span>📄</span>
-              <h3>No notices yet</h3>
-              <p>Upload a notice to get started.</p>
-            </div>
-          ) : (
-            <div className="notice-list">
-              {dashboard.notices.map((notice) => (
+          <div className="space-y-4">
+            {dashboard.notices.length === 0 ? (
+              <div className="py-10 text-center">
+                <div className="text-4xl">📄</div>
+
+                <h3 className="mt-3 font-semibold text-slate-800">
+                  No notices yet
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Upload a notice to get started.
+                </p>
+              </div>
+            ) : (
+              dashboard.notices.map((notice) => (
                 <NoticeCard
                   key={notice._id}
                   notice={notice}
                 />
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </section>
 
         {/* Deadlines */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
 
-        <section className="dashboard-section">
-          <div className="section-header">
-            <div>
-              <h2>Upcoming Deadlines</h2>
-              <p>Don't miss an important date.</p>
-            </div>
+          <div className="mb-5">
+            <h2 className="text-lg font-bold text-slate-900">
+              Upcoming Deadlines
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Don't miss an important date.
+            </p>
           </div>
 
-          <div className="deadline-list">
+          <div className="space-y-3">
             {dashboard.deadlines.length === 0 ? (
-              <div className="empty-state">
-                <span>🎉</span>
-                <p>No upcoming deadlines.</p>
+              <div className="py-10 text-center">
+                <div className="text-4xl">🎉</div>
+
+                <p className="mt-3 text-sm text-slate-500">
+                  No upcoming deadlines.
+                </p>
               </div>
             ) : (
-              dashboard.deadlines.map((deadline) => (
-                <DeadlineCard
-                  key={deadline._id}
-                  deadline={deadline}
-                />
-              ))
+              dashboard.deadlines.map(
+                (deadline) => (
+                  <DeadlineCard
+                    key={deadline._id}
+                    deadline={deadline}
+                  />
+                )
+              )
             )}
           </div>
         </section>
       </div>
 
       {/* Tasks */}
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
 
-      <section className="dashboard-section tasks-section">
-        <div className="section-header">
+        <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2>Action Checklist</h2>
-            <p>Complete your pending tasks.</p>
+            <h2 className="text-lg font-bold text-slate-900">
+              Action Checklist
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Complete your pending tasks.
+            </p>
           </div>
+
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            {dashboard.tasks.length} tasks
+          </span>
         </div>
 
-        <div className="task-list">
+        <div>
           {dashboard.tasks.map((task) => (
             <TaskItem
               key={task._id}
@@ -294,7 +427,8 @@ const Dashboard = () => {
           ))}
         </div>
       </section>
-    </div>
+
+    </main>
   );
 };
 

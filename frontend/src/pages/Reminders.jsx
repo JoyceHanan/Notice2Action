@@ -11,20 +11,31 @@ const Reminders = () => {
       type: "deadline",
       completed: false,
     },
+
     {
       _id: "2",
       title: "Upload Marksheet",
       description:
         "Upload your latest marksheet.",
-      date: "2026-08-29",
+      date: "2026-08-31",
       type: "task",
       completed: false,
+    },
+
+    {
+      _id: "3",
+      title: "Hackathon Registration",
+      description:
+        "Register for the upcoming hackathon.",
+      date: "2026-09-05",
+      type: "deadline",
+      completed: true,
     },
   ]);
 
   const toggleReminder = (id) => {
-    setReminders((prev) =>
-      prev.map((reminder) =>
+    setReminders((previous) =>
+      previous.map((reminder) =>
         reminder._id === id
           ? {
               ...reminder,
@@ -35,45 +46,108 @@ const Reminders = () => {
     );
   };
 
+  const pendingCount = reminders.filter(
+    (reminder) => !reminder.completed
+  ).length;
+
   return (
-    <div className="reminders-page">
+    <main className="min-h-screen bg-slate-50 px-4 py-8 md:ml-60 md:px-8 lg:px-10">
 
-      <div className="page-header">
-        <h1>Reminders 🔔</h1>
+      {/* Header */}
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
 
-        <p>
-          Stay on top of your deadlines and pending actions.
-        </p>
+        <div>
+          <p className="mb-2 text-sm font-semibold text-indigo-600">
+            STAY ON TRACK
+          </p>
+
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+            Reminders 🔔
+          </h1>
+
+          <p className="mt-2 text-sm text-slate-500 sm:text-base">
+            Stay on top of your deadlines and pending actions.
+          </p>
+        </div>
+
+        <div className="w-fit rounded-full bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700">
+          {pendingCount} pending
+        </div>
       </div>
 
-      <div className="reminder-list">
+      {/* Reminder list */}
+      <div className="max-w-4xl space-y-4">
 
         {reminders.length === 0 ? (
-          <div className="empty-state">
-            <span>🎉</span>
-            <h3>No reminders</h3>
-            <p>You are all caught up!</p>
+          <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center shadow-sm">
+
+            <div className="text-5xl">
+              🎉
+            </div>
+
+            <h3 className="mt-4 text-lg font-bold text-slate-800">
+              You're all caught up!
+            </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              You don't have any pending reminders.
+            </p>
+
           </div>
         ) : (
           reminders.map((reminder) => (
             <div
               key={reminder._id}
-              className={`reminder-card ${
-                reminder.completed ? "completed" : ""
+              className={`flex flex-col gap-4 rounded-2xl border bg-white p-5 shadow-sm transition sm:flex-row sm:items-center ${
+                reminder.completed
+                  ? "border-slate-200 opacity-60"
+                  : "border-slate-200 hover:shadow-md"
               }`}
             >
-              <div className="reminder-icon">
+
+              {/* Icon */}
+              <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl ${
+                  reminder.type === "deadline"
+                    ? "bg-red-50"
+                    : "bg-indigo-50"
+                }`}
+              >
                 {reminder.type === "deadline"
                   ? "⏰"
                   : "✅"}
               </div>
 
-              <div className="reminder-content">
-                <h3>{reminder.title}</h3>
+              {/* Content */}
+              <div className="min-w-0 flex-1">
 
-                <p>{reminder.description}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3
+                    className={`font-bold ${
+                      reminder.completed
+                        ? "text-slate-400 line-through"
+                        : "text-slate-900"
+                    }`}
+                  >
+                    {reminder.title}
+                  </h3>
 
-                <span>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${
+                      reminder.type === "deadline"
+                        ? "bg-red-50 text-red-600"
+                        : "bg-indigo-50 text-indigo-600"
+                    }`}
+                  >
+                    {reminder.type}
+                  </span>
+                </div>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  {reminder.description}
+                </p>
+
+                <p className="mt-2 text-xs font-medium text-slate-400">
                   Due:{" "}
                   {new Date(
                     reminder.date
@@ -82,25 +156,31 @@ const Reminders = () => {
                     month: "short",
                     year: "numeric",
                   })}
-                </span>
+                </p>
               </div>
 
+              {/* Action */}
               <button
-                className="reminder-button"
                 onClick={() =>
                   toggleReminder(reminder._id)
                 }
+                className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                  reminder.completed
+                    ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                }`}
               >
                 {reminder.completed
-                  ? "Completed"
+                  ? "Completed ✓"
                   : "Mark Done"}
               </button>
+
             </div>
           ))
         )}
 
       </div>
-    </div>
+    </main>
   );
 };
 
