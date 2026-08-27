@@ -6,7 +6,7 @@ function Register() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -35,7 +35,7 @@ function Register() {
       setLoading(true);
 
       await registerUser({
-        username: formData.username,
+        name: formData.name,
         email: formData.email,
         password: formData.password,
       });
@@ -79,13 +79,13 @@ function Register() {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">
-              Username
+              Full Name
             </label>
 
             <input
               type="text"
-              name="username"
-              value={formData.username}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               placeholder="Enter your username"
               required
