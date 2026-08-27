@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router";
 
 import NoticeCard from "../components/NoticeCard";
-import DeadlineCard from "../components/Deadlinecard";
+import DeadlineCard from "../components/DeadlineCard";
 import TaskItem from "../components/TaskItem";
 import Loading from "../components/Loading";
 
